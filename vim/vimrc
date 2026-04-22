@@ -1,0 +1,122 @@
+" Harrell family vim config — tuned for markdown scanning (dyslexia-friendly)
+" Author: TC, 2026-04-21
+
+set nocompatible
+syntax enable
+filetype plugin indent on
+set background=dark
+set termguicolors
+
+set number
+set cursorline
+set wrap
+set linebreak
+set breakindent
+set showbreak=↪\
+set scrolloff=4
+set sidescrolloff=8
+
+set tabstop=2
+set shiftwidth=2
+set expandtab
+set autoindent
+
+set ignorecase
+set smartcase
+set incsearch
+set hlsearch
+
+set mouse=a
+set clipboard=unnamedplus
+set laststatus=2
+
+" ───── Accessibility additions (TC, 2026-04-22) ─────
+" ADHD: kill bell flashes, smoother redraw, persistent undo, autosave on focus loss.
+set noerrorbells visualbell t_vb=
+set lazyredraw
+set undofile
+set undodir=~/.vim/undo//
+silent! call mkdir(expand('~/.vim/undo'), 'p')
+autocmd FocusLost * silent! wa
+nnoremap <silent> <Esc> :nohlsearch<CR><Esc>
+
+" Autism: predictable layout — splits always go the same way, gutter never shifts.
+set splitright splitbelow
+set confirm
+set signcolumn=yes
+
+" Polish: single space after period when joining.
+set nojoinspaces
+
+" Tab hotkeys (browser-like). gt / gT cycle tabs (vim builtins).
+nnoremap <C-t> :tabnew<CR>
+nnoremap <C-w>t :tabclose<CR>
+
+autocmd FileType markdown setlocal conceallevel=0
+autocmd FileType markdown setlocal spell spelllang=en_us
+autocmd FileType markdown setlocal textwidth=0
+autocmd FileType markdown setlocal wrapmargin=0
+
+" ───── Markdown color overrides ─────
+" Purple (family color) for headings, scaled by level.
+" Other elements tuned for scan-ability: bold = warm, italic = cool, code = green.
+function! s:HarrellMarkdownColors() abort
+  highlight clear markdownH1
+  highlight clear markdownH2
+  highlight clear markdownH3
+  highlight clear markdownH4
+  highlight clear markdownH5
+  highlight clear markdownH6
+
+  highlight markdownH1       guifg=#C77DFF gui=bold ctermfg=141 cterm=bold
+  highlight markdownH2       guifg=#B56CF0 gui=bold ctermfg=135 cterm=bold
+  highlight markdownH3       guifg=#A050E8 gui=bold ctermfg=129 cterm=bold
+  highlight markdownH4       guifg=#8B3CD8 gui=bold ctermfg=98  cterm=bold
+  highlight markdownH5       guifg=#7530C8 gui=bold ctermfg=97  cterm=bold
+  highlight markdownH6       guifg=#5F24B0 gui=bold ctermfg=91  cterm=bold
+
+  highlight markdownH1Delimiter guifg=#C77DFF ctermfg=141
+  highlight markdownH2Delimiter guifg=#B56CF0 ctermfg=135
+  highlight markdownH3Delimiter guifg=#A050E8 ctermfg=129
+  highlight markdownH4Delimiter guifg=#8B3CD8 ctermfg=98
+  highlight markdownH5Delimiter guifg=#7530C8 ctermfg=97
+  highlight markdownH6Delimiter guifg=#5F24B0 ctermfg=91
+
+  highlight markdownHeadingDelimiter guifg=#C77DFF ctermfg=141
+
+  " Italic dropped (dyslexia: italic letters lean and merge). Color carries the emphasis.
+  highlight markdownBold        guifg=#FFB86C gui=bold ctermfg=215 cterm=bold
+  highlight markdownItalic      guifg=#8BE9FD ctermfg=117
+  highlight markdownBoldItalic  guifg=#FFB86C gui=bold ctermfg=215 cterm=bold
+
+  highlight markdownCode        guifg=#50FA7B ctermfg=84
+  highlight markdownCodeBlock   guifg=#50FA7B ctermfg=84
+  highlight markdownCodeDelimiter guifg=#6272A4 ctermfg=61
+
+  highlight markdownUrl         guifg=#FF79C6 gui=underline ctermfg=212 cterm=underline
+  highlight markdownLinkText    guifg=#8BE9FD ctermfg=117
+  highlight markdownLinkDelimiter guifg=#6272A4 ctermfg=61
+  highlight markdownLinkTextDelimiter guifg=#6272A4 ctermfg=61
+
+  highlight markdownListMarker  guifg=#FFB86C gui=bold ctermfg=215 cterm=bold
+  highlight markdownOrderedListMarker guifg=#FFB86C gui=bold ctermfg=215 cterm=bold
+  highlight markdownBlockquote  guifg=#F1FA8C ctermfg=228
+  highlight markdownRule        guifg=#6272A4 ctermfg=61
+  highlight markdownHorizontalRule guifg=#6272A4 ctermfg=61
+endfunction
+
+autocmd FileType markdown call s:HarrellMarkdownColors()
+autocmd ColorScheme * if &filetype ==# 'markdown' | call s:HarrellMarkdownColors() | endif
+
+" Generic UI polish
+highlight Normal       guibg=#1F1916 guifg=#e8e8e8 ctermbg=NONE ctermfg=254
+highlight CursorLine   guibg=#2a2a2a ctermbg=236 cterm=NONE
+highlight LineNr       guifg=#6272A4 ctermfg=61
+highlight CursorLineNr guifg=#C77DFF gui=bold ctermfg=141 cterm=bold
+highlight StatusLine   guibg=#6F1AB5 guifg=#FFFFFF ctermbg=91 ctermfg=255
+highlight StatusLineNC guibg=#2a2a2a guifg=#888888 ctermbg=236 ctermfg=244
+highlight VertSplit    guifg=#6272A4 ctermfg=61
+highlight Visual       guibg=#44475A ctermbg=60
+highlight Search       guibg=#FFB86C guifg=#000000 ctermbg=215 ctermfg=0
+" Spellcheck: bold high-contrast bg so it reads from across the room.
+highlight SpellBad     guibg=#5C1F1F guifg=#FFB4B4 gui=bold ctermbg=52 ctermfg=210 cterm=bold
