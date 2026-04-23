@@ -12,14 +12,17 @@ Wired to `Cmd+N` (Super+N) on tc-nest. No hotkey on Jarvis yet — see
 ## Files
 
 - `note` — the script. Goes at `~/.local/bin/note` (or anywhere on PATH).
+- `note-toggle` — wrapper that makes Cmd+N a true toggle (open if no
+  drawer exists, close the existing drawer otherwise). Goes at
+  `~/.local/bin/note-toggle`.
 - `templates/evergreen.md` — the template, by itself, for reference or
   reuse with other tools.
 
 ## Install
 
 ```bash
-cp note/note ~/.local/bin/note
-chmod +x ~/.local/bin/note
+cp note/note note/note-toggle ~/.local/bin/
+chmod +x ~/.local/bin/note ~/.local/bin/note-toggle
 mkdir -p ~/Manor/Nathan/inbox
 ```
 
@@ -48,7 +51,9 @@ See `../sway/note-binding.conf` for the snippet. Two lines:
 
 1. `for_window [app_id="note"]` — pin note windows as a 384×640 drawer
    at `(0, 80)`. This is what makes it a *drawer* rather than a window.
-2. `bindsym $mod+n exec ~/.local/bin/note` — Super+N hotkey.
+2. `bindsym $mod+n exec ~/.local/bin/note-toggle` — Super+N hotkey.
+   Toggle semantics: first press opens a new note drawer, second press
+   closes it (see "Toggle safety" below).
 
 The script invokes `foot --app-id=note ...` so the window-rule matches.
 
@@ -73,6 +78,25 @@ The template has five sections, in this order:
 The HTML comments under each heading explain themselves to future-you.
 They don't render in the markdown preview, but they're right there in
 vim while you're writing — a built-in coach.
+
+## Toggle safety
+
+`note-toggle` closes the drawer by sending a sway close-request, which
+relays SIGHUP through foot to vim. Three safety nets protect unsaved
+content:
+
+1. **`autocmd FocusLost * silent! wa`** — saves when focus leaves vim
+   (covers clicks-away and most window-switches).
+2. **`autocmd VimLeave * silent! wa`** — saves when vim receives SIGHUP
+   or otherwise exits cleanly (covers the Cmd+N-to-close path).
+3. **Persistent undo at `~/.vim/undo/`** — if something still gets lost,
+   reopen the file and `u` through the history.
+
+In the rare case vim can't save before dying (e.g., you were mid-insert
+with a pending buffer change that didn't flush), swap-file recovery:
+```bash
+vim -r <filepath>
+```
 
 ## Per-machine notes
 
