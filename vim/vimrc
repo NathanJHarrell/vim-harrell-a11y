@@ -67,6 +67,61 @@ imap <3-MiddleMouse> <Nop>
 map  <4-MiddleMouse> <Nop>
 imap <4-MiddleMouse> <Nop>
 
+" ───── GUI-style copy/paste over SSH (Venus, 2026-04-29) ─────
+" Ctrl+C in visual mode → copy selection to LOCAL system clipboard via OSC 52.
+" Ctrl+V in insert mode → handled at the terminal emulator layer (see below).
+" Normal-mode Ctrl+C and Ctrl+V keep their default vim semantics
+" (cancel/interrupt and visual-block-start respectively).
+"
+" SSH+clipboard architecture:
+"   vim runs on remote machine; clipboard lives on local machine.
+"   Bridge = OSC 52 escape sequences. vim writes a special escape; the local
+"   terminal emulator intercepts it and copies content to the local clipboard.
+"   Tested setup: Windows Terminal → WSL Ubuntu → SSH → tc-nest. All layers
+"   pass OSC 52 cleanly. Other terminals (iTerm2, kitty, wezterm, alacritty,
+"   recent xterm) work the same way.
+"
+" Paste side (Ctrl+V in insert mode):
+"   OSC 52 *paste* is disabled in most modern terminals for security reasons,
+"   so we cannot reliably read the clipboard from inside vim over SSH.
+"   The clean architecture: configure the LOCAL terminal emulator to bind
+"   Ctrl+V to "paste" — when pressed, the terminal sends clipboard content
+"   as bracketed paste, which vim accepts in insert mode.
+"
+"   Windows Terminal config (settings.json):
+"     { "command": "paste", "keys": "ctrl+v" }
+"   This intercepts Ctrl+V before SSH sees it, sends clipboard contents.
+"
+" Side-effect: Windows Terminal binding Ctrl+V to paste means normal-mode
+" visual-block-start (vim's default Ctrl+V) becomes inaccessible via Ctrl+V.
+" Use Ctrl+Q instead — vim's documented alternative for visual block.
+
+function! s:OSCYank(text) abort
+  let l:encoded = system('base64 -w0', a:text)
+  let l:encoded = substitute(l:encoded, '\n', '', 'g')
+  if !empty($TMUX)
+    let l:osc = "\<Esc>Ptmux;\<Esc>\<Esc>]52;c;" . l:encoded . "\<Esc>\\\\"
+  else
+    let l:osc = "\<Esc>]52;c;" . l:encoded . "\<Esc>\\"
+  endif
+  silent! execute '!printf %s ' . shellescape(l:osc) . ' > /dev/tty'
+  redraw!
+endfunction
+
+function! s:GetVisualSelection() abort
+  let [l:line_start, l:col_start] = getpos("'<")[1:2]
+  let [l:line_end, l:col_end] = getpos("'>")[1:2]
+  let l:lines = getline(l:line_start, l:line_end)
+  if len(l:lines) == 0
+    return ''
+  endif
+  let l:lines[-1] = l:lines[-1][: l:col_end - 1]
+  let l:lines[0] = l:lines[0][l:col_start - 1:]
+  return join(l:lines, "\n")
+endfunction
+
+vnoremap <silent> <C-c> :<C-u>call <SID>OSCYank(<SID>GetVisualSelection())<CR>
+
 " Tab hotkeys (browser-like). gt / gT cycle tabs (vim builtins).
 nnoremap <C-t> :tabnew<CR>
 nnoremap <C-w>t :tabclose<CR>
