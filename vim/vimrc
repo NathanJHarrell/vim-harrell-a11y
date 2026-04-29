@@ -49,6 +49,24 @@ set signcolumn=yes
 " Polish: single space after period when joining.
 set nojoinspaces
 
+" ───── Anti-stray-paste (Venus, 2026-04-29) ─────
+" Disable middle-click paste from X11 primary selection.
+" Reason: drawercast's devtools snippet (line 49 of ~/charos/drawercast/
+" devtools-snippet.js) — and any other text selected during normal use —
+" was leaking into vim buffers via accidental middle-click paste. The
+" primary-selection mechanism is X11-layer behavior; this neutralizes
+" middle-click in vim specifically without disabling other mouse handling.
+" Diagnosed and fixed 2026-04-29 after a week of mysterious code appearing
+" in unrelated files (universal CLAUDE.md, homestead-v2.md, etc.).
+map  <MiddleMouse>   <Nop>
+imap <MiddleMouse>   <Nop>
+map  <2-MiddleMouse> <Nop>
+imap <2-MiddleMouse> <Nop>
+map  <3-MiddleMouse> <Nop>
+imap <3-MiddleMouse> <Nop>
+map  <4-MiddleMouse> <Nop>
+imap <4-MiddleMouse> <Nop>
+
 " Tab hotkeys (browser-like). gt / gT cycle tabs (vim builtins).
 nnoremap <C-t> :tabnew<CR>
 nnoremap <C-w>t :tabclose<CR>
